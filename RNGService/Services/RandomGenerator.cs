@@ -29,7 +29,7 @@ namespace RNGService.Services
             {
                 _rng.NextBytes(bytes);
             }
-            _userStatisticsService.CacheUserStatistics(_context).Wait();
+            // _userStatisticsService.CacheUserStatistics(_context).Wait();
 
             return bytes;
         }

@@ -1,36 +1,47 @@
-
+using System.Linq;
+using System.Security.Claims;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.Extensions.Caching.Memory;
 
-namespace RNGService.Services
+public class CustomAuthorizationHandler : AuthorizationHandler<CustomRequirement>
 {
-
-    public class AuthorizationHandler : AuthorizationHandler<CustomAuthorizationRequirement>
+    protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, CustomRequirement requirement)
     {
-        private readonly IMemoryCache cache;
-        private const string AuthorizedRoleName = "Contributor";
-        private const string AuthorizedIdPName = "idpInterview.com";
+        var user = context.User;
 
-        public AuthorizationHandler(IMemoryCache cache)
+        // Check if all required claims are present
+        var objectIdClaim = user.FindFirst("objectId");
+        var rolesClaim = user.FindFirst("roles");
+        var idpClaim = user.FindFirst("idp");
+
+        if (objectIdClaim == null || rolesClaim == null || idpClaim == null)
         {
-            this.cache = cache;
+            context.Fail();
+            return Task.CompletedTask;
         }
 
-        /// <summary>
-        /// Handler must verify if the claims identity contains claims: objectId, roles and idp.
-        /// If does not contain all claims -> authorization fails
-        /// if Roles don't contain "AuthorizedRoleName", authorization fails
-        /// if idp claim value is different than "AuthorizedIdpName", authorization fails
-        /// Otherwise authentication is successfull
-        /// 
-        /// Unit tests must cover the implementation (functionality, corner cases etc)
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="requirement"></param>
-        /// <returns></returns>
-        protected override async Task HandleRequirementAsync(AuthorizationHandlerContext context, CustomAuthorizationRequirement requirement)
+        // Check if roles contain the authorized role
+        var roles = rolesClaim.Value.Split(',');
+        if (!roles.Contains("AuthorizedRoleName"))
         {
-            return;
+            context.Fail();
+            return Task.CompletedTask;
         }
+
+        // Check if idp claim value matches the authorized idp name
+        if (idpClaim.Value != "AuthorizedIdpName")
+        {
+            context.Fail();
+            return Task.CompletedTask;
+        }
+
+        // Authorization successful
+        context.Succeed(requirement);
+        return Task.CompletedTask;
     }
+}
+
+public class CustomRequirement : IAuthorizationRequirement
+{
+    // Custom requirement properties can be added here if needed
 }

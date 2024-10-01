@@ -1,18 +1,26 @@
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.Caching.Memory;
 using Moq;
 using Xunit;
 
 public class CustomAuthorizationHandlerTests
 {
+    private readonly IMemoryCache _cache;
+
+    public CustomAuthorizationHandlerTests()
+    {
+        _cache = new MemoryCache(new MemoryCacheOptions());
+    }
+
     [Fact]
     public async Task Should_Fail_If_Claims_Are_Missing()
     {
         // Arrange
         var user = new ClaimsPrincipal(new ClaimsIdentity());
         var context = new AuthorizationHandlerContext(new[] { new CustomRequirement() }, user, null);
-        var handler = new CustomAuthorizationHandler();
+        var handler = new CustomAuthorizationHandler(_cache);
 
         // Act
         await handler.HandleAsync(context);
@@ -33,7 +41,7 @@ public class CustomAuthorizationHandlerTests
         };
         var user = new ClaimsPrincipal(new ClaimsIdentity(claims));
         var context = new AuthorizationHandlerContext(new[] { new CustomRequirement() }, user, null);
-        var handler = new CustomAuthorizationHandler();
+        var handler = new CustomAuthorizationHandler(_cache);
 
         // Act
         await handler.HandleAsync(context);
@@ -54,7 +62,7 @@ public class CustomAuthorizationHandlerTests
         };
         var user = new ClaimsPrincipal(new ClaimsIdentity(claims));
         var context = new AuthorizationHandlerContext(new[] { new CustomRequirement() }, user, null);
-        var handler = new CustomAuthorizationHandler();
+        var handler = new CustomAuthorizationHandler(_cache);
 
         // Act
         await handler.HandleAsync(context);
@@ -75,7 +83,7 @@ public class CustomAuthorizationHandlerTests
         };
         var user = new ClaimsPrincipal(new ClaimsIdentity(claims));
         var context = new AuthorizationHandlerContext(new[] { new CustomRequirement() }, user, null);
-        var handler = new CustomAuthorizationHandler();
+        var handler = new CustomAuthorizationHandler(_cache);
 
         // Act
         await handler.HandleAsync(context);
